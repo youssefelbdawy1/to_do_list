@@ -21,26 +21,22 @@ const generateToken = (id) => {
 // =============================
 // REGISTER
 // =============================
+// field presence, email format, and password length are validated
+// by registerValidator + validate middleware in authRoutes.js
 const register = asyncwrapper(async (req, res, next) => {
 
-  const avatar = req.file ? req.file.path : null;
   const {
     name,
     email,
     password,
+    ID
   } = req.body;
-
-  if (!name || !email || !password) {
-    return next(
-      new AppError("Data are required", 400, httpstatustext.FAIL)
-    );
-  }
 
   const existingUser = await User.findOne({ email });
 
   if (existingUser) {
     return next(
-      new AppError("Email already exists", 400, httpstatustext.FAIL)
+      new AppError("User already exists", 400, httpstatustext.FAIL)
     );
   }
 
@@ -50,12 +46,12 @@ const register = asyncwrapper(async (req, res, next) => {
     name,
     email,
     password: hashedPassword,
-    avatar
+    ID
   });
 
   res.status(201).json({
     status: httpstatustext.SUCCESS,
-    message: "Student registered successfully",
+    message: "User registered successfully",
     email: user.email
   });
 
@@ -65,6 +61,8 @@ const register = asyncwrapper(async (req, res, next) => {
 // =============================
 // LOGIN
 // =============================
+// field presence and email format are validated
+// by loginValidator + validate middleware in authRoutes.js
 const login = asyncwrapper(async (req, res, next) => {
 
   const { email, password } = req.body;
@@ -78,23 +76,21 @@ const login = asyncwrapper(async (req, res, next) => {
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
-  
-    if (!isMatch ) {
-      return next(
-        new AppError("Invalid credentials", 401, httpstatustext.FAIL)
-      );
-    }
 
+  if (!isMatch) {
+    return next(
+      new AppError("Invalid credentials", 401, httpstatustext.FAIL)
+    );
+  }
 
-  
   const token = generateToken(user._id);
 
   res.cookie("token", token, {
-  httpOnly: true,
-  secure: true,       // production لازم https
-  sameSite: "none",   // مهم مع cross-origin
-  maxAge: 7 * 24 * 60 * 60 * 1000
-});
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: 7 * 24 * 60 * 60 * 1000
+  });
 
   res.json({
     status: httpstatustext.SUCCESS,
@@ -103,7 +99,7 @@ const login = asyncwrapper(async (req, res, next) => {
       id: user._id,
       name: user.name,
       email: user.email,
-      avatar: user.avatar
+      ID: user.ID
     }
   });
 });
@@ -111,7 +107,7 @@ const login = asyncwrapper(async (req, res, next) => {
 
 
 // =============================
-// // LOGOUT
+// LOGOUT
 // =============================
 const logout = asyncwrapper(async (req, res, next) =>  {
   res.clearCookie("token", {
@@ -121,7 +117,7 @@ const logout = asyncwrapper(async (req, res, next) =>  {
   });
 
   res.json({
-    status: "success",
+    status: httpstatustext.SUCCESS,
     message: "Logged out successfully"
   });
 });
