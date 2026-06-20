@@ -4,13 +4,6 @@
     "name": "To-Do List API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
-  "variable": [
-    {
-      "key": "Base_url",
-      "value": "http://localhost:5000/api",
-      "type": "string"
-    }
-  ],
   "item": [
     {
       "name": "Auth",
@@ -23,11 +16,11 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Youssef\",\n  \"email\": \"youssef@example.com\",\n  \"password\": \"Password123!\"\n}"
+              "raw": "{\n  \"name\": \"Youssef\",\n  \"email\": \"youssef@example.com\",\n  \"password\": \"Password123!\",\n  \"ID\": \"STU-2026-001\"\n}"
             },
             "url": {
-              "raw": "{{Base_url}}/auth/register",
-              "host": ["{{Base_url}}"],
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
               "path": ["auth", "register"]
             }
           }
@@ -41,7 +34,11 @@
                 "exec": [
                   "pm.test(\"Login successful\", function () {",
                   "    pm.response.to.have.status(200);",
-                  "});"
+                  "});",
+                  "",
+                  "// Auth is cookie-based (httpOnly token cookie set by the server).",
+                  "// Postman stores it automatically against base_url's domain,",
+                  "// no need to manually copy a token into a variable."
                 ],
                 "type": "text/javascript"
               }
@@ -56,8 +53,8 @@
               "raw": "{\n  \"email\": \"youssef@example.com\",\n  \"password\": \"Password123!\"\n}"
             },
             "url": {
-              "raw": "{{Base_url}}/auth/login",
-              "host": ["{{Base_url}}"],
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
               "path": ["auth", "login"]
             }
           }
@@ -68,8 +65,8 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{Base_url}}/auth/logout",
-              "host": ["{{Base_url}}"],
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
               "path": ["auth", "logout"]
             }
           }
@@ -77,33 +74,52 @@
       ]
     },
     {
-      "name": "Notes",
+      "name": "Posts",
       "item": [
         {
-          "name": "Create Note",
+          "name": "Create Post",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Post created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "// auto-save the new post's _id so Update/Delete can use {{id}}",
+                  "const json = pm.response.json();",
+                  "if (json && json.data && json.data._id) {",
+                  "    pm.environment.set(\"id\", json.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"My First Note\",\n  \"description\": \"This is a note description\",\n  \"date\": \"2025-01-01\"\n}"
+              "raw": "{\n  \"title\": \"My First Post\",\n  \"content\": \"This is a post content\",\n  \"date\": \"2025-01-01\",\n  \"ID\": \"POST-001\"\n}"
             },
             "url": {
-              "raw": "{{Base_url}}/notes",
-              "host": ["{{Base_url}}"],
-              "path": ["notes"]
+              "raw": "{{base_url}}/posts",
+              "host": ["{{base_url}}"],
+              "path": ["posts"]
             }
           }
         },
         {
-          "name": "Get All Notes",
+          "name": "Get All Posts",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{Base_url}}/notes?page=1&limit=10",
-              "host": ["{{Base_url}}"],
-              "path": ["notes"],
+              "raw": "{{base_url}}/posts?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["posts"],
               "query": [
                 { "key": "page", "value": "1" },
                 { "key": "limit", "value": "10" }
@@ -112,45 +128,32 @@
           }
         },
         {
-          "name": "Get Single Note",
+          "name": "Update Post",
           "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{Base_url}}/notes/:id",
-              "host": ["{{Base_url}}"],
-              "path": ["notes", ":id"],
-              "variable": [{ "key": "id", "value": "NOTE_ID_HERE" }]
-            }
-          }
-        },
-        {
-          "name": "Update Note",
-          "request": {
-            "method": "PATCH",
+            "method": "PUT",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Updated Title\",\n  \"description\": \"Updated description\",\n  \"date\": \"2025-06-01\"\n}"
+              "raw": "{\n  \"title\": \"Updated Title\",\n  \"content\": \"Updated content\",\n  \"date\": \"2025-06-01\"\n}"
             },
             "url": {
-              "raw": "{{Base_url}}/notes/:id",
-              "host": ["{{Base_url}}"],
-              "path": ["notes", ":id"],
-              "variable": [{ "key": "id", "value": "NOTE_ID_HERE" }]
+              "raw": "{{base_url}}/posts/:id",
+              "host": ["{{base_url}}"],
+              "path": ["posts", ":id"],
+              "variable": [{ "key": "id", "value": "{{id}}" }]
             }
           }
         },
         {
-          "name": "Delete Note",
+          "name": "Delete Post",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{Base_url}}/notes/:id",
-              "host": ["{{Base_url}}"],
-              "path": ["notes", ":id"],
-              "variable": [{ "key": "id", "value": "NOTE_ID_HERE" }]
+              "raw": "{{base_url}}/posts/:id",
+              "host": ["{{base_url}}"],
+              "path": ["posts", ":id"],
+              "variable": [{ "key": "id", "value": "{{id}}" }]
             }
           }
         }
